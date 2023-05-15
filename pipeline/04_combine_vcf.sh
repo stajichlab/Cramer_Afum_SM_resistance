@@ -27,15 +27,15 @@ if [[ -z $POPYAML || ! -s $POPYAML ]]; then
 	echo "Cannot find \$POPYAML variable - set in config.txt"
 	exit
 fi
-IN=$SLICEVCF
-mkdir -p $FINALVCF
+IN=$SLICEVCF/$GENOMENAME
+mkdir -p $FINALVCF/$GENOMENAME
 
 for POPNAME in $(yq eval '.Populations | keys' $POPYAML | perl -p -e 's/^\s*\-\s*//')
 do
   for TYPE in SNP INDEL
   do
-     OUT=$FINALVCF/$PREFIX.$POPNAME.$TYPE.combined_selected.vcf.gz
-     QC=$FINALVCF/$PREFIX.$POPNAME.$TYPE.combined_selected.QC.tsv
+     OUT=$FINALVCF/$GENOMENAME/$PREFIX.$POPNAME.$TYPE.combined_selected.vcf.gz
+     QC=$FINALVCF/$GENOMENAME/$PREFIX.$POPNAME.$TYPE.combined_selected.QC.tsv
      if [ ! -s $OUT ];  then
      	bcftools concat -Oz -o $OUT --threads $CPU $IN/$POPNAME/${PREFIX}.*.${TYPE}.selected.vcf.gz
      	tabix $OUT

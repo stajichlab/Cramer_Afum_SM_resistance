@@ -1,10 +1,9 @@
 #!/usr/bin/bash -l
-#SBATCH --mem 24G -N 1 -n 1 -c 2 -J slice.GVCFGeno --out logs/GVCFGenoGATK4.slice_%a.%A.log -a 1-6
+#SBATCH --mem 24G -N 1 -n 1 -c 2 -J slice.GVCFGeno --out logs/GVCFGenoGATK4.slice_%a.%A.log -a 1-9 -p short
 # might run on short queue if small enough
 # match array jobs (-a 1-4) to the number of chromosomes - if you have a lot then you can change the GVCF_INTERVAL in config.txt
 # and then can run in batches of 5, 10 etc to combine ranges to run through
 
-#--time 48:00:00
 hostname
 MEM=24g
 module load picard
@@ -15,16 +14,6 @@ module load yq
 module load workspace/scratch
 
 source config.txt
-
-#declare -x TEMPDIR=$TEMP/$USER/$$
-
-#cleanup() {
-	#echo "rm temp is: $TEMPDIR"
-#	rm -rf $TEMPDIR
-#}#
-
-# Set trap to ensure cleanupis stopped
-#trap "cleanup; rm -rf $TEMPDIR; exit" SIGHUP SIGINT SIGTERM EXIT
 
 GVCF_INTERVAL=1
 N=${SLURM_ARRAY_TASK_ID}
@@ -61,8 +50,8 @@ if [ ! $CPU ]; then
     CPU=2
 fi
 if [[ $(ls $GVCFFOLDER | grep -c -P "\.g.vcf$") -gt "0" ]]; then
-   parallel -j $CPU bgzip {} ::: $GVCFFOLDER/*.g.vcf
-  parallel -j $CPU tabix -f {} ::: $GVCFFOLDER/*.g.vcf.gz
+   parallel -j $CPU bgzip {} ::: $GVCFFOLDER/$GENOMENAME/*.g.vcf
+  parallel -j $CPU tabix -f {} ::: $GVCFFOLDER/$GENOMENAME/*.g.vcf.gz
 fi
 
 if [[ -z $POPYAML || ! -s $POPYAML ]]; then
@@ -72,15 +61,15 @@ fi
 if [ -z $SLICEVCF ]; then
 	SLICEVCF=vcf_slice
 fi
-mkdir -p $SLICEVCF
+mkdir -p $SLICEVCF/$GENOMENAME
 for POPNAME in $(yq eval '.Populations | keys' $POPYAML | perl -p -e 's/^\s*\-\s*//')
 do
 	echo "POPNAME $POPNAME"
-	FILES=$(yq eval '.Populations.'$POPNAME'[]' $POPYAML | perl -p -e "s/(\S+)/-V $GVCFFOLDER\/\$1.g.vcf.gz/g"  )
+	FILES=$(yq eval '.Populations.'$POPNAME'[]' $POPYAML | perl -p -e "s/(\S+)/-V $GVCFFOLDER\/$GENOMENAME\/\$1.g.vcf.gz/g"  )
 	INTERVALS=$(cut -f1 $REFGENOME.fai  | sed -n "${NSTART},${NEND}p" | perl -p -e 's/(\S+)\n/--intervals $1 /g')
 
-	mkdir -p $SLICEVCF/$POPNAME
-	STEM=$SLICEVCF/$POPNAME/$PREFIX.$N
+	mkdir -p $SLICEVCF/$GENOMENAME/$POPNAME
+	STEM=$SLICEVCF/$GENOMENAME/$POPNAME/$PREFIX.$N
 	GENOVCFOUT=$STEM.all.vcf
 	FILTERSNP=$STEM.SNP.filter.vcf
 	FILTERINDEL=$STEM.INDEL.filter.vcf
@@ -93,8 +82,6 @@ do
 		DB=$TEMPDIR/${GVCFFOLDER}_slice_$N
 		rm -rf $DB
 		gatk  --java-options "-Xmx$MEM -Xms$MEM" GenomicsDBImport --consolidate --merge-input-intervals --genomicsdb-workspace-path $DB $FILES $INTERVALS --tmp-dir $TEMPDIR --reader-threads $CPU
-		#--reader-threads $CPU
-		#gatk  --java-options "-Xmx$MEM -Xms$MEM" GenomicsDBImport --genomicsdb-workspace-path $DB $FILES $INTERVALS  --reader-threads $CPU
 		time gatk GenotypeGVCFs --reference $REFGENOME --output $GENOVCFOUT -V gendb://$DB --tmp-dir $TEMPDIR
 		ls -l $TEMPDIR
 		rm -rf $DB
@@ -181,7 +168,3 @@ do
 	    tabix $SELECTINDEL.gz
 	fi
 done
-
-if [ -d $TEMPDIR ]; then
-	rmdir $TEMPDIR
-fi

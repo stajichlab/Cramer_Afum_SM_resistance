@@ -21,7 +21,7 @@ fi
 if [ ! -f $REFGENOME.dict ]; then
   echo "NEED a $REFGENOME.dict - make sure 00_index.sh is run"
 fi
-mkdir -p $TMPOUTDIR $ALNFOLDER $UNMAPPED
+mkdir -p $TMPOUTDIR $ALNFOLDER/$GENOMENAME $UNMAPPED/$GENOMENAME
 
 CPU=2
 if [ $SLURM_CPUS_ON_NODE ]; then
@@ -46,7 +46,7 @@ IFS=,
 tail -n +2 $SAMPFILE | sed -n ${N}p | while read STRAIN FILEBASE
 do
   PREFIX=$STRAIN
-  FINALFILE=$ALNFOLDER/$STRAIN.$HTCEXT
+  FINALFILE=$ALNFOLDER/$GENOMENAME/$STRAIN.$HTCEXT
   echo "To process $PREFIX and $FINALFILE"
   if [ ! -s $FINALFILE ]; then
     BAMSTOMERGE=()
@@ -60,7 +60,6 @@ do
       SRTED=$TEMP/$BASE.srt.bam
       DDFILE=$TEMP/$BASE.DD.bam
 
-      FINALFILE=$ALNFOLDER/$STRAIN.$HTCEXT
       READGROUP="@RG\tID:$BASE\tSM:$STRAIN\tLB:$BASE\tPL:illumina\tCN:$RGCENTER"
       echo "$TMPBAMFILE $READGROUP"
 
@@ -97,8 +96,8 @@ do
     fi
   fi #FINALFILE created or already exists
   FQ=$(basename $FASTQEXT .gz)
-  UMAP=$UNMAPPED/${STRAIN}.$FQ
-  UMAPSINGLE=$UNMAPPED/${STRAIN}_single.$FQ
+  UMAP=$UNMAPPED/$GENOMENAME/${STRAIN}.$FQ
+  UMAPSINGLE=$UNMAPPED/$GENOMENAME/${STRAIN}_single.$FQ
   #echo "$UMAP $UMAPSINGLE $FQ"
 
   if [ ! -f $UMAP.gz ]; then

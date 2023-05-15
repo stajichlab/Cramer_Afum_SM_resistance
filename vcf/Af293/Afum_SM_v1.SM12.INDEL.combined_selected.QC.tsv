@@ -1,0 +1,11 @@
+Chromosome	Length	Total Variants	VarPerKb	SNP	INDEL	Ts	Tv	Ts/Tv
+Chr1_A_fumigatus_Af293	4918979	3530	0.72	0	1765	8	3	2.67
+Chr2_A_fumigatus_Af293	4844372	2346	0.48	0	1173	16	2	8.00
+Chr3_A_fumigatus_Af293	4079167	2708	0.66	0	1354	10	2	5.00
+Chr4_A_fumigatus_Af293	3927224	1896	0.48	0	948	2	0	0
+Chr5_A_fumigatus_Af293	3948441	1938	0.49	0	969	0	1	0.00
+Chr6_A_fumigatus_Af293	3778736	2192	0.58	0	1096	7	2	3.50
+Chr7_A_fumigatus_Af293	2058334	1168	0.57	0	584	0	1	0.00
+Chr8_A_fumigatus_Af293	1833124	988	0.54	0	494	2	0	0
+mito_A_fumigatus_Af293	31765	12	0.38	0	6	0	0	0
+Totals	29420142	16778	0.57	0	8389	45	11	4.09
